@@ -1,0 +1,1 @@
+# No outputs required for the AFT deployment POC.
