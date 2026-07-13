@@ -29,6 +29,9 @@ before_script:
 validate:
   stage: validate
   script:
+    - pwd
+    - ls -la
+    - cat main.tf
     - terraform init
     - terraform fmt -check
     - terraform validate
@@ -42,10 +45,10 @@ plan:
       - terraform/tfplan
     expire_in: 7 days
 
-apply:
-  stage: apply
-  dependencies:
-    - plan
-  script:
-    - terraform apply -auto-approve tfplan
-  when: manual
+# apply:
+#   stage: apply
+#   dependencies:
+#     - plan
+#   script:
+#     - terraform apply -auto-approve tfplan
+#   when: manual
