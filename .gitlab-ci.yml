@@ -1,54 +1,66 @@
-image:
-  name: hashicorp/terraform:1.6.6
-  entrypoint:
-    - ""
-
 stages:
   - validate
   - plan
   - apply
 
 variables:
-  TF_ROOT: "terraform"
+  TF_ROOT: terraform
   TF_IN_AUTOMATION: "true"
   TF_INPUT: "false"
 
-  TF_VAR_aws_region: $AWS_REGION
-  TF_VAR_aws_role_arn: $AWS_ROLE_ARN
-
-workflow:
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "feature/aft-deployment"'
-    - when: never
+image:
+  name: hashicorp/terraform:1.6.6
+  entrypoint: [""]
 
 before_script:
-  - apk add --no-cache bash curl jq
+  - apk add --no-cache bash curl jq python3 py3-pip aws-cli
+
+
+  # Verify base credentials
+  - aws sts get-caller-identity
+
+  # Assume deployment role
+  - |
+      CREDS=$(aws sts assume-role \
+        --role-arn "$AWS_ROLE_ARN" \
+        --role-session-name gitlab-aft)
+
+      export AWS_ACCESS_KEY_ID=$(echo $CREDS | jq -r '.Credentials.AccessKeyId')
+      export AWS_SECRET_ACCESS_KEY=$(echo $CREDS | jq -r '.Credentials.SecretAccessKey')
+      export AWS_SESSION_TOKEN=$(echo $CREDS | jq -r '.Credentials.SessionToken')
+
+  # Verify assumed role
+  - aws sts get-caller-identity
+
   - cd $TF_ROOT
-  - terraform --version
 
 validate:
   stage: validate
   script:
-    - pwd
-    - ls -la
-    - cat main.tf
+    - terraform fmt -check -recursive
     - terraform init
-    - terraform fmt -check
     - terraform validate
+  only:
+    - feature/aft-deployment
 
 plan:
   stage: plan
   script:
+    - terraform init
     - terraform plan -out=tfplan
   artifacts:
     paths:
       - terraform/tfplan
-    expire_in: 7 days
+  only:
+    - feature/aft-deployment
 
 # apply:
 #   stage: apply
-#   dependencies:
-#     - plan
 #   script:
+#     - terraform init
 #     - terraform apply -auto-approve tfplan
 #   when: manual
+#   dependencies:
+#     - plan
+#   only:
+#     - feature/aft-deployment
