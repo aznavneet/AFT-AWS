@@ -3,7 +3,5 @@ terraform {
     bucket         = "aft-terraform-state-demo"
     key            = "aft/terraform.tfstate"
     region         = "eu-north-1"
-    dynamodb_table = "terraform-locks"
-    encrypt        = true
   }
 }

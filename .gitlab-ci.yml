@@ -53,7 +53,7 @@ plan:
     - echo "===== AFT MODULE PROVIDERS ====="
     - cat .terraform/modules/aft/providers.tf
     - echo "===== END ====="
-    - terraform plan -out=tfplan
+    - terraform plan -lock=false -out=tfplan
   artifacts:
     paths:
       - terraform/tfplan
