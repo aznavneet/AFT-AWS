@@ -60,11 +60,11 @@ plan:
   only:
     - feature/aft-deployment
 
-apply:
+destroy:
   stage: apply
   script:
     - terraform init
-    - terraform apply -auto-approve tfplan
+    - terraform destroy -auto-approve -lock=false
   when: manual
   dependencies:
     - plan
