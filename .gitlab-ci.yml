@@ -70,3 +70,4 @@ destroy:
     - plan
   only:
     - feature/aft-deployment
+    
