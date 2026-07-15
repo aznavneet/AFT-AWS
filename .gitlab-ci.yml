@@ -60,13 +60,13 @@ plan:
   only:
     - feature/aft-deployment
 
-# apply:
-#   stage: apply
-#   script:
-#     - terraform init
-#     - terraform apply -auto-approve tfplan
-#   when: manual
-#   dependencies:
-#     - plan
-#   only:
-#     - feature/aft-deployment
+apply:
+  stage: apply
+  script:
+    - terraform init
+    - terraform apply -auto-approve tfplan
+  when: manual
+  dependencies:
+    - plan
+  only:
+    - feature/aft-deployment
