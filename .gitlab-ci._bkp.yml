@@ -1,5 +1,7 @@
 stages:
-  - destroy
+  - validate
+  - plan
+  - apply
 
 variables:
   TF_ROOT: terraform
@@ -24,7 +26,7 @@ before_script:
   - |
       CREDS=$(aws sts assume-role \
         --role-arn "$AWS_ROLE_ARN" \
-        --role-session-name gitlab-aft-destroy)
+        --role-session-name gitlab-aft)
 
       export AWS_ACCESS_KEY_ID=$(echo $CREDS | jq -r '.Credentials.AccessKeyId')
       export AWS_SECRET_ACCESS_KEY=$(echo $CREDS | jq -r '.Credentials.SecretAccessKey')
@@ -35,11 +37,37 @@ before_script:
 
   - cd $TF_ROOT
 
-destroy:
-  stage: destroy
+validate:
+  stage: validate
   script:
+    - terraform fmt -recursive
     - terraform init
-    - terraform destroy -lock=false -auto-approve
-  when: manual
+    - terraform validate
   only:
     - feature/aft-deployment
+
+plan:
+  stage: plan
+  script:
+    - terraform init
+    - echo "===== AFT MODULE PROVIDERS ====="
+    - cat .terraform/modules/aft/providers.tf
+    - echo "===== END ====="
+    - terraform plan -lock=false -out=tfplan
+  artifacts:
+    paths:
+      - terraform/tfplan
+  only:
+    - feature/aft-deployment
+
+destroy:
+  stage: apply
+  script:
+    - terraform init
+    - terraform destroy -auto-approve -lock=false
+  when: manual
+  dependencies:
+    - plan
+  only:
+    - feature/aft-deployment
+    
